@@ -28,6 +28,14 @@ The current contract stores one event (`event_id` is initialized to `101`) and t
 
 Lifecycle events are emitted for initialization, minting, claims, check-in, listings, and resale. An indexer can consume those events to build a history, subject to ledger event retention and indexing policy.
 
+### Ticket lifecycle
+
+- A ticket minted without a claim hash starts as `Valid`; one minted with a claim hash starts as `Claimable`.
+- A successful claim requires the recipient's authorization, changes `Claimable` to `Valid`, and removes that claim link. There is no contract-level expiration or administrator revocation operation for claim links; claimability ends on redemption or when the persistent storage entry is no longer available.
+- A valid ticket may be listed for resale. A successful resale changes its owner and clears the listing.
+- Check-in changes `Valid` to `ProofNFT` and clears any resale listing. `ProofNFT` is terminal: it cannot be listed or checked in again. The `Used` enum variant is retained for compatibility but is not assigned by the current contract.
+- The contract stores one event, with event ID `101`; ticket transitions are not isolated across multiple events.
+
 ### Current limitations
 
 - Only one event is represented by the contract state; per-event isolation and multi-event storage are not implemented.

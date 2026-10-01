@@ -446,4 +446,32 @@ mod test {
         assert!(client.try_buy_resale(&Address::generate(&env), &1).is_err());
         assert_eq!(client.get_ticket(&1).current_owner, seller);
     }
+
+    #[test]
+    fn check_in_is_terminal_for_ticket_lifecycle() {
+        let env = Env::default();
+        let (contract_id, organizer) = setup_event(&env, 1, 500);
+        let client = EventTicketContractClient::new(&env, &contract_id);
+        let initial_owner = Address::generate(&env);
+        let claim_recipient = Address::generate(&env);
+        let claim_hash = String::from_str(&env, "lifecycle-claim");
+
+        client.mint_ticket(
+            &initial_owner,
+            &String::from_str(&env, "General"),
+            &100,
+            &claim_hash,
+        );
+        client.claim_ticket(&claim_hash, &claim_recipient);
+        assert_eq!(client.get_ticket(&1).status, TicketStatus::Valid);
+
+        assert_eq!(
+            client.check_in_ticket(&organizer, &1),
+            TicketStatus::ProofNFT
+        );
+        assert!(client
+            .try_list_resale(&claim_recipient, &1, &100)
+            .is_err());
+        assert!(client.try_check_in_ticket(&organizer, &1).is_err());
+    }
 }
