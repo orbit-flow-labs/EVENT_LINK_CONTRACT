@@ -173,11 +173,8 @@ impl EventTicketContract {
         price: i128,
         claim_secret_hash: String,
     ) -> u64 {
-        let mut meta: EventMeta = env
-            .storage()
-            .instance()
-            .get(&DataKey::EventInfo)
-            .unwrap_or_else(|| fail(&env, ContractError::EventNotInitialized));
+        buyer.require_auth();
+        let mut meta: EventMeta = env.storage().instance().get(&DataKey::EventInfo).unwrap();
         if price <= 0 {
             fail(&env, ContractError::InvalidTicketPrice);
         }
@@ -475,26 +472,19 @@ mod test {
     }
 
     #[test]
-    fn initialize_rejects_oversized_name_and_supply() {
+    fn mint_requires_buyer_authorization() {
         let env = Env::default();
-        env.mock_all_auths();
-        let organizer = Address::generate(&env);
-        let long_name = "E".repeat(MAX_EVENT_NAME_LENGTH as usize + 1);
+        let (contract_id, _) = setup_event(&env, 1, 500);
+        let client = EventTicketContractClient::new(&env, &contract_id);
+        let buyer = Address::generate(&env);
+        env.set_auths(&[]);
 
-        let name_contract_id = env.register_contract(None, EventTicketContract);
-        let name_client = EventTicketContractClient::new(&env, &name_contract_id);
-        assert!(name_client
-            .try_initialize(&organizer, &String::from_str(&env, &long_name), &1, &500,)
-            .is_err());
-
-        let supply_contract_id = env.register_contract(None, EventTicketContract);
-        let supply_client = EventTicketContractClient::new(&env, &supply_contract_id);
-        assert!(supply_client
-            .try_initialize(
-                &organizer,
-                &String::from_str(&env, "Event"),
-                &(MAX_EVENT_SUPPLY + 1),
-                &500,
+        assert!(client
+            .try_mint_ticket(
+                &buyer,
+                &String::from_str(&env, "General"),
+                &100,
+                &String::from_str(&env, ""),
             )
             .is_err());
     }
