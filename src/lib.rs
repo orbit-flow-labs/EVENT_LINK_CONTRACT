@@ -303,6 +303,37 @@ impl EventTicketContract {
         );
     }
 
+    /// Cancel an active resale listing
+    pub fn cancel_resale(env: Env, seller: Address, ticket_id: u64) {
+        seller.require_auth();
+
+        let mut ticket: Ticket = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Ticket(ticket_id))
+            .expect("Ticket not found");
+
+        if ticket.current_owner != seller {
+            panic!("Not ticket owner");
+        }
+        if ticket.status != TicketStatus::Valid {
+            panic!("Only valid tickets can have resale listings canceled");
+        }
+        if !ticket.is_listed_resale {
+            panic!("Ticket is not listed for resale");
+        }
+
+        ticket.is_listed_resale = false;
+        ticket.resale_price = 0;
+        env.storage()
+            .persistent()
+            .set(&DataKey::Ticket(ticket_id), &ticket);
+        env.events().publish(
+            (symbol_short!("cancel"), ticket.event_id),
+            (ticket_id, seller),
+        );
+    }
+
     /// Transfer a listed ticket and record royalty payout values in an event
     pub fn buy_resale(env: Env, buyer: Address, ticket_id: u64) {
         buyer.require_auth();
@@ -445,5 +476,28 @@ mod test {
         assert_eq!(ticket.resale_price, 0);
         assert!(client.try_buy_resale(&Address::generate(&env), &1).is_err());
         assert_eq!(client.get_ticket(&1).current_owner, seller);
+    }
+
+    #[test]
+    fn seller_can_cancel_resale_listing() {
+        let env = Env::default();
+        let (contract_id, _) = setup_event(&env, 1, 500);
+        let client = EventTicketContractClient::new(&env, &contract_id);
+        let seller = Address::generate(&env);
+        let buyer = Address::generate(&env);
+
+        client.mint_ticket(
+            &seller,
+            &String::from_str(&env, "General"),
+            &100,
+            &String::from_str(&env, ""),
+        );
+        client.list_resale(&seller, &1, &100);
+        client.cancel_resale(&seller, &1);
+
+        let ticket = client.get_ticket(&1);
+        assert!(!ticket.is_listed_resale);
+        assert_eq!(ticket.resale_price, 0);
+        assert!(client.try_buy_resale(&buyer, &1).is_err());
     }
 }

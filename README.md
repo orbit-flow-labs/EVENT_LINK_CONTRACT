@@ -23,6 +23,7 @@ The current contract stores one event (`event_id` is initialized to `101`) and t
 | `claim_ticket(claim_secret_hash, new_owner)` | Redeem a claim link and transfer the ticket record to the authenticated owner. |
 | `check_in_ticket(organizer, ticket_id)` | Authorize the organizer and convert an unused, claimed ticket to `ProofNFT`. |
 | `list_resale(seller, ticket_id, resale_price)` | Require the current owner and a valid ticket; enforce a positive price and 150% cap. |
+| `cancel_resale(seller, ticket_id)` | Require the current owner and clear an active resale listing. |
 | `buy_resale(buyer, ticket_id)` | Change ticket ownership for a listed ticket and record the royalty/seller payout values in an event. |
 | `get_ticket(ticket_id)` | Read a stored ticket record. |
 
