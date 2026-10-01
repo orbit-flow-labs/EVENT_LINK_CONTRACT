@@ -2,7 +2,7 @@
 
 Rust/Soroban contract source for the EventLink ticketing prototype. This repository contains the contract crate, contract-specific CI, and the Testnet deployment helper. The web application and API live in separate repositories.
 
-> **Network and maturity:** The deployment helper targets Stellar Testnet. The crate currently has no unit-test cases; the `cargo test` CI step verifies compilation only. Treat this code as a prototype until contract behavior, authorization, and upgrade policy have been independently reviewed.
+> **Network and maturity:** The deployment helper targets Stellar Testnet. CI runs contract behavior tests across all Cargo targets as well as formatting and a WASM build. The current suite is not a security audit; review contract behavior, authorization, and upgrade policy independently before production use.
 
 ## Repositories
 
@@ -32,7 +32,7 @@ Lifecycle events are emitted for initialization, minting, claims, check-in, list
 
 - Only one event is represented by the contract state; per-event isolation and multi-event storage are not implemented.
 - `buy_resale` updates contract ownership and calculates payout values, but does not transfer payment or distribute royalties.
-- Unit tests cover large-value resale royalty calculations, claim-link uniqueness, and resale cancellation on check-in. Expand coverage for authorization, inventory, resale caps, and event payloads before relying on this contract.
+- Unit tests cover invalid initialization, large-value resale royalty calculations, claim-link uniqueness, and resale cancellation on check-in. Expand coverage for authorization, inventory, resale caps, and event payloads before relying on this contract.
 - This repository does not define a contract upgrade or migration policy.
 
 ## Requirements

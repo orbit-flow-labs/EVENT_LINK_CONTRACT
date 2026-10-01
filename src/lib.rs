@@ -384,6 +384,25 @@ mod test {
     }
 
     #[test]
+    fn initialize_rejects_invalid_configuration() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, EventTicketContract);
+        let client = EventTicketContractClient::new(&env, &contract_id);
+        let organizer = Address::generate(&env);
+
+        assert!(client
+            .try_initialize(&organizer, &String::from_str(&env, ""), &100, &500,)
+            .is_err());
+        assert!(client
+            .try_initialize(&organizer, &String::from_str(&env, "Event"), &0, &500,)
+            .is_err());
+        assert!(client
+            .try_initialize(&organizer, &String::from_str(&env, "Event"), &100, &10_001,)
+            .is_err());
+    }
+
+    #[test]
     fn buy_resale_handles_large_royalty_calculation() {
         let env = Env::default();
         let (contract_id, _) = setup_event(&env, 1, 500);
