@@ -448,6 +448,9 @@ impl EventTicketContract {
 }
 
 #[cfg(test)]
+mod tests;
+
+#[cfg(test)]
 mod test {
     use super::*;
     use soroban_sdk::{
